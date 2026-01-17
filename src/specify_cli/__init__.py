@@ -1165,7 +1165,57 @@ def init(
 
     console.print(tracker.render())
     console.print("\n[bold green]Project ready.[/bold green]")
-    
+
+    # Ask for Brief MCP token and configure .mcp.json
+    mcp_configured = False
+    console.print()
+    console.print(Panel(
+        "Brief uses an MCP server to provide context to your AI agent.\n"
+        "You need a token to connect to the knowledge base.",
+        title="[cyan]Brief MCP Setup[/cyan]",
+        border_style="cyan",
+        padding=(1, 2)
+    ))
+
+    if sys.stdin.isatty():
+        try:
+            mcp_token = typer.prompt("\nEnter your Brief MCP token (or press Enter to skip)", default="", show_default=False)
+            if mcp_token.strip():
+                mcp_config = {
+                    "mcpServers": {
+                        "brief-mcp": {
+                            "command": "npx",
+                            "args": ["-y", "brief-mcp", "--access-token", mcp_token.strip()]
+                        }
+                    }
+                }
+                mcp_json_path = project_path / ".mcp.json"
+
+                # Merge with existing config if present
+                if mcp_json_path.exists():
+                    try:
+                        with open(mcp_json_path, 'r', encoding='utf-8') as f:
+                            existing_config = json.load(f)
+                        if "mcpServers" not in existing_config:
+                            existing_config["mcpServers"] = {}
+                        existing_config["mcpServers"]["brief-mcp"] = mcp_config["mcpServers"]["brief-mcp"]
+                        mcp_config = existing_config
+                    except (json.JSONDecodeError, KeyError):
+                        pass  # Use new config if existing is invalid
+
+                with open(mcp_json_path, 'w', encoding='utf-8') as f:
+                    json.dump(mcp_config, f, indent=2)
+                    f.write('\n')
+
+                console.print(f"[green]Created .mcp.json with Brief MCP configuration[/green]")
+                mcp_configured = True
+            else:
+                console.print("[yellow]Skipped MCP configuration. You can add it manually later.[/yellow]")
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n[yellow]Skipped MCP configuration.[/yellow]")
+    else:
+        console.print("[dim]Non-interactive mode: skipping MCP token prompt[/dim]")
+
     # Show git error details if initialization failed
     if git_error_message:
         console.print()
@@ -1217,10 +1267,14 @@ def init(
         steps_lines.append(f"{step_num}. Set [cyan]CODEX_HOME[/cyan] environment variable before running Codex: [cyan]{cmd}[/cyan]")
         step_num += 1
 
-    # Add brief-mcp configuration step
-    steps_lines.append(f"{step_num}. Configure brief-mcp (add to your mcp.json):")
-    steps_lines.append('   [cyan]{"mcpServers": {"brief-mcp": {"command": "npx", "args": ["-y", "brief-mcp", "--access-token", "YOUR_TOKEN"]}}}[/cyan]')
-    step_num += 1
+    # Add brief-mcp configuration step (only if not already configured)
+    if not mcp_configured:
+        steps_lines.append(f"{step_num}. Configure brief-mcp (add to your .mcp.json):")
+        steps_lines.append('   [cyan]{"mcpServers": {"brief-mcp": {"command": "npx", "args": ["-y", "brief-mcp", "--access-token", "YOUR_TOKEN"]}}}[/cyan]')
+        step_num += 1
+    else:
+        steps_lines.append(f"{step_num}. Brief MCP is configured! [green](.mcp.json created)[/green]")
+        step_num += 1
 
     steps_lines.append(f"{step_num}. Start using slash commands with your AI agent:")
 
