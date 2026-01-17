@@ -233,15 +233,15 @@ SCRIPT_TYPE_CHOICES = {"sh": "POSIX Shell (bash/zsh)", "ps": "PowerShell"}
 CLAUDE_LOCAL_PATH = Path.home() / ".claude" / "local" / "claude"
 
 BANNER = """
-███████╗██████╗ ███████╗ ██████╗██╗███████╗██╗   ██╗
-██╔════╝██╔══██╗██╔════╝██╔════╝██║██╔════╝╚██╗ ██╔╝
-███████╗██████╔╝█████╗  ██║     ██║█████╗   ╚████╔╝ 
-╚════██║██╔═══╝ ██╔══╝  ██║     ██║██╔══╝    ╚██╔╝  
-███████║██║     ███████╗╚██████╗██║██║        ██║   
-╚══════╝╚═╝     ╚══════╝ ╚═════╝╚═╝╚═╝        ╚═╝   
+██████╗ ██████╗ ██╗███████╗███████╗
+██╔══██╗██╔══██╗██║██╔════╝██╔════╝
+██████╔╝██████╔╝██║█████╗  █████╗
+██╔══██╗██╔══██╗██║██╔══╝  ██╔══╝
+██████╔╝██║  ██║██║███████╗██║
+╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝╚═╝
 """
 
-TAGLINE = "GitHub Spec Kit - Spec-Driven Development Toolkit"
+TAGLINE = "Brief - Context-First Development with MCP"
 class StepTracker:
     """Track and render hierarchical steps without emojis, similar to Claude Code tree output.
     Supports live auto-refresh via an attached refresh callback.
@@ -434,8 +434,8 @@ class BannerGroup(TyperGroup):
 
 
 app = typer.Typer(
-    name="specify",
-    help="Setup tool for Specify spec-driven development projects",
+    name="brief",
+    help="Brief CLI - Context-first development with MCP integration",
     add_completion=False,
     invoke_without_command=True,
     cls=BannerGroup,
@@ -460,7 +460,7 @@ def callback(ctx: typer.Context):
     """Show banner when no subcommand is provided."""
     if ctx.invoked_subcommand is None and "--help" not in sys.argv and "-h" not in sys.argv:
         show_banner()
-        console.print(Align.center("[dim]Run 'specify --help' for usage information[/dim]"))
+        console.print(Align.center("[dim]Run 'brief --help' for usage information[/dim]"))
         console.print()
 
 def run_command(cmd: list[str], check_return: bool = True, capture: bool = False, shell: bool = False) -> Optional[str]:
@@ -1213,21 +1213,47 @@ def init(
             cmd = f"setx CODEX_HOME {quoted_path}"
         else:  # Unix-like systems
             cmd = f"export CODEX_HOME={quoted_path}"
-        
+
         steps_lines.append(f"{step_num}. Set [cyan]CODEX_HOME[/cyan] environment variable before running Codex: [cyan]{cmd}[/cyan]")
         step_num += 1
 
+    # Add brief-mcp configuration step
+    steps_lines.append(f"{step_num}. Configure brief-mcp (add to your mcp.json):")
+    steps_lines.append('   [cyan]{"mcpServers": {"brief-mcp": {"command": "npx", "args": ["-y", "brief-mcp", "--access-token", "YOUR_TOKEN"]}}}[/cyan]')
+    step_num += 1
+
     steps_lines.append(f"{step_num}. Start using slash commands with your AI agent:")
 
-    steps_lines.append("   2.1 [cyan]/speckit.constitution[/] - Establish project principles")
-    steps_lines.append("   2.2 [cyan]/speckit.specify[/] - Create baseline specification")
-    steps_lines.append("   2.3 [cyan]/speckit.plan[/] - Create implementation plan")
-    steps_lines.append("   2.4 [cyan]/speckit.tasks[/] - Generate actionable tasks")
-    steps_lines.append("   2.5 [cyan]/speckit.implement[/] - Execute implementation")
+    steps_lines.append(f"   {step_num}.1 [cyan]/brief.context[/] - Check context before any action (ALWAYS DO THIS FIRST)")
+    steps_lines.append(f"   {step_num}.2 [cyan]/speckit.constitution[/] - Establish project principles")
+    steps_lines.append(f"   {step_num}.3 [cyan]/speckit.specify[/] - Create baseline specification")
+    steps_lines.append(f"   {step_num}.4 [cyan]/speckit.plan[/] - Create implementation plan")
+    steps_lines.append(f"   {step_num}.5 [cyan]/speckit.tasks[/] - Generate actionable tasks")
+    steps_lines.append(f"   {step_num}.6 [cyan]/speckit.implement[/] - Execute implementation")
 
     steps_panel = Panel("\n".join(steps_lines), title="Next Steps", border_style="cyan", padding=(1,2))
     console.print()
     console.print(steps_panel)
+
+    # Brief MCP info panel
+    brief_lines = [
+        "[bold yellow]IMPORTANT: Brief Rule - Context First[/bold yellow]",
+        "",
+        "Before ANY significant action, your AI agent will check brief-mcp for context.",
+        "This ensures you never code 'blind' - the agent always understands:",
+        "",
+        "  - Business rules and requirements",
+        "  - Existing code patterns and conventions",
+        "  - Technical constraints and dependencies",
+        "  - Domain knowledge and terminology",
+        "",
+        "MCP Tools: [cyan]search-context[/], [cyan]add-knowledge[/], [cyan]list-knowledge[/], [cyan]delete-knowledge[/]",
+        "",
+        "Use [cyan]/brief.context[/] to explicitly check context at any time.",
+    ]
+    brief_panel = Panel("\n".join(brief_lines), title="Brief - Context First (brief-mcp)", border_style="yellow", padding=(1,2))
+    console.print()
+    console.print(brief_panel)
 
     enhancement_lines = [
         "Optional commands that you can use for your specs [bright_black](improve quality & confidence)[/bright_black]",
@@ -1287,13 +1313,13 @@ def version():
     """Display version and system information."""
     import platform
     import importlib.metadata
-    
+
     show_banner()
-    
+
     # Get CLI version from package metadata
     cli_version = "unknown"
     try:
-        cli_version = importlib.metadata.version("specify-cli")
+        cli_version = importlib.metadata.version("brief-cli")
     except Exception:
         # Fallback: try reading from pyproject.toml if running from source
         try:
@@ -1305,10 +1331,10 @@ def version():
                     cli_version = data.get("project", {}).get("version", "unknown")
         except Exception:
             pass
-    
-    # Fetch latest template release version
-    repo_owner = "github"
-    repo_name = "spec-kit"
+
+    # Fetch latest template release version from fork
+    repo_owner = "marlowetal653"
+    repo_name = "innovhack"
     api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
     
     template_version = "unknown"
@@ -1353,7 +1379,7 @@ def version():
 
     panel = Panel(
         info_table,
-        title="[bold cyan]Specify CLI Information[/bold cyan]",
+        title="[bold cyan]Brief CLI Information[/bold cyan]",
         border_style="cyan",
         padding=(1, 2)
     )

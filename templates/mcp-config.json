@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "brief-mcp": {
+      "command": "npx",
+      "args": ["-y", "brief-mcp", "--access-token", "YOUR_MCP_TOKEN_HERE"]
+    }
+  }
+}
